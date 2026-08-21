@@ -21,9 +21,9 @@ Players choose a category, guess letters using the on-screen keyboard, and try t
 
 - React
 - JavaScript (JSX)
+- TypeScript
 - Vite
 - CSS
-- SVG
 
 ## How to play
 
