@@ -1,5 +1,4 @@
-// HangmanGame.jsx
-import React, { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import HangmanCanvas from "./HangmanCanvas";
 import "./HangmanGame.css";
 
@@ -15,11 +14,12 @@ const wordData = {
     "BROWSER",
     "SERVER",
     "DATABASE",
-    "API",
     "FLUTTER",
     "ANDROID",
     "GITHUB",
     "TYPESCRIPT",
+    "PYTHON",
+    "CODING",
   ],
   anime: [
     "ONEPIECE",
@@ -32,10 +32,11 @@ const wordData = {
     "TITAN",
     "SHONEN",
     "AKIRA",
-    "EVANGELION",
     "BLEACH",
     "HINATA",
     "KAKASHI",
+    "TOTODORO",
+    "PIKACHU",
   ],
   travel: [
     "TOKYO",
@@ -52,6 +53,8 @@ const wordData = {
     "QUEENSTOWN",
     "PHUKET",
     "CHIANGMAI",
+    "PASSPORT",
+    "BACKPACK",
   ],
   animals: [
     "ELEPHANT",
@@ -68,136 +71,143 @@ const wordData = {
     "WHALE",
     "SHARK",
     "PARROT",
+    "OCTOPUS",
+    "KOALA",
   ],
 };
 
 const categories = Object.keys(wordData);
+const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
-const HangmanGame = () => {
-  const [category, setCategory] = useState(categories[0]);
+function HangmanGame() {
+  const [category, setCategory] = useState("programming");
   const [word, setWord] = useState("");
   const [guessedLetters, setGuessedLetters] = useState([]);
   const [mistakes, setMistakes] = useState(0);
-  const [gameStarted, setGameStarted] = useState(false);
 
-  const chooseRandomWord = (cat) => {
-    const list = wordData[cat];
-    const randomIndex = Math.floor(Math.random() * list.length);
-    return list[randomIndex].toUpperCase();
+  const chooseRandomWord = (selectedCategory) => {
+    const words = wordData[selectedCategory];
+    const randomIndex = Math.floor(Math.random() * words.length);
+
+    return words[randomIndex];
   };
 
-  const startGame = (selectedCategory) => {
+  const startGame = (selectedCategory = category) => {
     setCategory(selectedCategory);
     setWord(chooseRandomWord(selectedCategory));
     setGuessedLetters([]);
     setMistakes(0);
-    setGameStarted(true);
   };
 
   useEffect(() => {
-    if (!word && categories.length) {
-      startGame(categories[0]);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    startGame("programming");
   }, []);
 
-  const handleGuess = (letter) => {
-    if (!gameStarted || guessedLetters.includes(letter)) return;
+  const isGameWon = () => {
+    return (
+      word.length > 0 &&
+      word.split("").every((letter) => guessedLetters.includes(letter))
+    );
+  };
 
-    setGuessedLetters([...guessedLetters, letter]);
+  const isGameLost = () => mistakes >= 6;
+
+  const handleGuess = (letter) => {
+    if (
+      guessedLetters.includes(letter) ||
+      isGameWon() ||
+      isGameLost()
+    ) {
+      return;
+    }
+
+    setGuessedLetters((currentGuesses) => [...currentGuesses, letter]);
+
     if (!word.includes(letter)) {
-      setMistakes(mistakes + 1);
+      setMistakes((currentMistakes) => currentMistakes + 1);
     }
   };
 
-  const isGameWon = () => {
-    if (!word) return false;
-    return word
-      .split("")
-      .every((letter) => guessedLetters.includes(letter));
-  };
-
-  const isGameLost = () => {
-    return mistakes >= 6;
-  };
-
-  const resetGame = () => {
-    setWord(chooseRandomWord(category));
-    setGuessedLetters([]);
-    setMistakes(0);
-  };
-
-  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-
   return (
-    <div className="hangman-container">
+    <main className="hangman-container">
       <h1>Hangman</h1>
 
-      {/* Category selection (only before game starts or you can always show it) */}
-      {!gameStarted ? (
-        <div className="category-select">
-          <p>Choose a category:</p>
-          <div className="category-buttons">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                className="category-button"
-                onClick={() => startGame(cat)}
-              >
-                {cat.charAt(0).toUpperCase() + cat.slice(1)}
-              </button>
-            ))}
-          </div>
+      <section className="category-select" aria-label="Choose a category">
+        <p>Choose a category:</p>
+
+        <div className="category-buttons">
+          {categories.map((item) => (
+            <button
+              key={item}
+              type="button"
+              className={`category-button ${
+                category === item ? "active" : ""
+              }`}
+              onClick={() => startGame(item)}
+            >
+              {item.charAt(0).toUpperCase() + item.slice(1)}
+            </button>
+          ))}
         </div>
-      ) : (
-        <>
-          <div className="category-label">Category: {category}</div>
+      </section>
 
-          <HangmanCanvas mistakes={mistakes} />
+      <p className="category-label">
+        Category: {category.charAt(0).toUpperCase() + category.slice(1)}
+      </p>
 
-          <div className="word-display">
-            {word.split("").map((letter, index) => (
-              <span
-                key={index}
-                className={`letter ${
-                  guessedLetters.includes(letter) ? "guessed" : ""
-                }`}
-              >
-                {guessedLetters.includes(letter) ? letter : ""}
-              </span>
-            ))}
-          </div>
+      <HangmanCanvas mistakes={mistakes} />
 
-          <div className="keyboard">
-            {alphabet.map((letter) => (
-              <button
-                key={letter}
-                className="keyboard-button"
-                onClick={() => handleGuess(letter)}
-                disabled={guessedLetters.includes(letter) || isGameWon() || isGameLost()}
-              >
-                {letter}
-              </button>
-            ))}
-          </div>
+      <p className="mistakes-count">Mistakes: {mistakes} / 6</p>
 
-          {isGameWon() && (
-            <div className="result-message win">🎉 You won!</div>
-          )}
+      <section className="word-display" aria-label="Hidden word">
+        {word.split("").map((letter, index) => {
+          const isGuessed = guessedLetters.includes(letter);
 
-          {isGameLost() && (
-            <div className="result-message lose">
-              You lost! The word was: <strong>{word}</strong>
-            </div>
-          )}
+          return (
+            <span
+              key={`${letter}-${index}`}
+              className={`letter ${isGuessed ? "guessed" : ""}`}
+            >
+              {isGuessed ? letter : ""}
+            </span>
+          );
+        })}
+      </section>
 
-          <button className="new-game-button" onClick={resetGame}>
-            New Game
+      <section className="keyboard" aria-label="Letter keyboard">
+        {alphabet.map((letter) => (
+          <button
+            key={letter}
+            type="button"
+            onClick={() => handleGuess(letter)}
+            disabled={
+              guessedLetters.includes(letter) || isGameWon() || isGameLost()
+            }
+          >
+            {letter}
           </button>
-        </>
+        ))}
+      </section>
+
+      {isGameWon() && (
+        <p className="result-message win">🎉 You won!</p>
       )}
-    </div>
+
+      {isGameLost() && (
+        <p className="result-message lose">
+          You lost! The word was: <strong>{word}</strong>
+        </p>
+      )}
+
+      <button
+        type="button"
+        className="new-game-button"
+        onClick={() => startGame(category)}
+      >
+        New Game
+      </button>
+    </main>
   );
-};
+}
 
 export default HangmanGame;
